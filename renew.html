@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Renew</title></head>
+<body style="background:#0b0f1a;color:#fff;font-family:Arial;text-align:center;padding-top:60px">
+
+<h2>⛔ License Expired</h2>
+<p>Please request renewal</p>
+
+<textarea id="note" placeholder="Payment / message"
+  style="width:260px;height:80px"></textarea><br><br>
+
+<button onclick="request()">Request Renewal</button>
+<p id="msg"></p>
+
+<script>
+function request(){
+  // next step: send to API / admin KV
+  msg.innerText = "Renewal request sent (admin side next step)";
+}
+</script>
+
+</body>
+</html>

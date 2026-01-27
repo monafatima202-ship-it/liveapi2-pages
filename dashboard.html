@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+</head>
+<body style="background:#0b0f1a;color:#fff;font-family:Arial;text-align:center;padding-top:60px">
+
+<h2>📊 Dashboard</h2>
+<p id="info">Checking license...</p>
+
+<script>
+(async ()=>{
+  const license = localStorage.getItem("license");
+  const device  = localStorage.getItem("device");
+
+  if (!license || !device) {
+    location.href = "index.html";
+    return;
+  }
+
+  const res = await fetch("https://live.mkapi009.workers.dev/", {
+    headers:{
+      "X-LICENSE-KEY": license,
+      "X-DEVICE-ID": device
+    }
+  });
+
+  const d = await res.json();
+
+  if (d.status === "ok") {
+    info.innerHTML = `
+      ✅ PLAN: ${d.plan}<br>
+      ⏳ EXPIRES: ${d.expires}
+    `;
+  } else if (d.code === "LICENSE_EXPIRED") {
+    location.href = "renew.html";
+  } else {
+    info.innerText = d.message || "Access error";
+  }
+})();
+</script>
+
+</body>
+</html>

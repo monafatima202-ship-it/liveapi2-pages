@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>License Login</title>
+</head>
+<body style="background:#0b0f1a;color:#fff;font-family:Arial;text-align:center;padding-top:60px">
+
+  <h2>🔐 License Login</h2>
+
+  <input id="license" placeholder="Enter License Key"
+    style="padding:10px;width:260px"><br><br>
+
+  <button onclick="login()"
+    style="padding:10px 20px">Login</button>
+
+  <p id="msg"></p>
+
+<script>
+async function login() {
+  const license = document.getElementById("license").value.trim();
+  if (!license) {
+    msg("Enter license key");
+    return;
+  }
+
+  const device = await deviceId();
+
+  const res = await fetch("https://live.mkapi009.workers.dev/", {
+    headers: {
+      "X-LICENSE-KEY": license,
+      "X-DEVICE-ID": device
+    }
+  });
+
+  const data = await res.json();
+
+  if (data.status === "ok") {
+    localStorage.setItem("license", license);
+    localStorage.setItem("device", device);
+    window.location = "dashboard.html";
+  } else {
+    msg(data.message || "Access denied");
+  }
+}
+
+function msg(t){ document.getElementById("msg").innerText = t; }
+
+// simple device id
+async function deviceId(){
+  const txt = navigator.userAgent + screen.width + screen.height;
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+</script>
+
+</body>
+</html>
