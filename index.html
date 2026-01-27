@@ -1,56 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <title>License Login</title>
+  <style>
+    body {
+      background:#0b1220;
+      color:white;
+      font-family:Arial;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+    .box {
+      text-align:center;
+    }
+    input {
+      padding:10px;
+      width:250px;
+      margin-bottom:10px;
+    }
+    button {
+      padding:10px 20px;
+      cursor:pointer;
+    }
+  </style>
 </head>
-<body style="background:#0b0f1a;color:#fff;font-family:Arial;text-align:center;padding-top:60px">
+<body>
 
+<div class="box">
   <h2>🔐 License Login</h2>
 
-  <input id="license" placeholder="Enter License Key"
-    style="padding:10px;width:260px"><br><br>
-
-  <button onclick="login()"
-    style="padding:10px 20px">Login</button>
-
-  <p id="msg"></p>
+  <input id="license" placeholder="Enter License Key">
+  <br>
+  <button onclick="login()">Login</button>
+</div>
 
 <script>
 async function login() {
-  const license = document.getElementById("license").value.trim();
-  if (!license) {
-    msg("Enter license key");
+  const key = document.getElementById("license").value.trim();
+
+  if (!key) {
+    alert("License required");
     return;
   }
 
-  const device = await deviceId();
+  const device = navigator.userAgent;
 
-  const res = await fetch("https://live.mkapi009.workers.dev/", {
-    headers: {
-      "X-LICENSE-KEY": license,
-      "X-DEVICE-ID": device
+  try {
+    const res = await fetch(
+      "https://live.mkapi009.workers.dev/?license=" + key + "&device=" + encodeURIComponent(device)
+    );
+
+    const data = await res.json();
+
+    if (data.status === "ok") {
+      localStorage.setItem("license", key);
+      window.location.href = "dashboard.html";
+    } else {
+      alert(data.message || "Invalid license");
     }
-  });
-
-  const data = await res.json();
-
-  if (data.status === "ok") {
-    localStorage.setItem("license", license);
-    localStorage.setItem("device", device);
-    window.location = "dashboard.html";
-  } else {
-    msg(data.message || "Access denied");
+  } catch (e) {
+    alert("API error");
   }
-}
-
-function msg(t){ document.getElementById("msg").innerText = t; }
-
-// simple device id
-async function deviceId(){
-  const txt = navigator.userAgent + screen.width + screen.height;
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 </script>
 
