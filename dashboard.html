@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>APX Premium Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  background:radial-gradient(circle,#2b1a00,#050300);
+  font-family:Arial;
+  color:#f5d27a;
+}
+
+.header{
+  padding:18px;
+  text-align:center;
+  background:linear-gradient(90deg,#3a2400,#1a0f00);
+  box-shadow:0 0 30px gold;
+}
+
+.header h2{
+  margin:0;
+  letter-spacing:1px;
+}
+
+.header small{
+  display:block;
+  margin-top:6px;
+  color:#ffd97a;
+}
+
+.signal{
+  margin:14px;
+  padding:14px;
+  background:#111;
+  border-left:6px solid gold;
+  border-radius:12px;
+  box-shadow:0 0 12px rgba(255,215,100,.2);
+}
+
+.call{border-color:#00ff99}
+.put{border-color:#ff5555}
+
+.badge{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:12px;
+  margin-left:6px;
+}
+
+.safe{background:#0a3;color:#000}
+.risky{background:#a30;color:#fff}
+
+.controls{
+  text-align:center;
+  padding:10px;
+}
+
+button{
+  width:45%;
+  margin:8px;
+  padding:12px;
+  background:#3a2600;
+  color:#f5d27a;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+  <small id="statusLine"></small>
+</div>
+
+<div id="signals"></div>
+
+<div class="controls">
+  <button onclick="location.reload()">🔄 Refresh</button>
+  <button onclick="location.href='asset.html'">⬅ Assets</button>
+</div>
+
+<audio id="beep">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+// 🔐 License check
+const lic = localStorage.getItem("license");
+if(!lic) location.href="index.html";
+
+// 📌 Pair
+const pair = new URLSearchParams(location.search).get("pair") || "EUR/USD";
+
+// 🌍 Market session logic
+function marketInfo(){
+  const h = new Date().getUTCHours();
+  if(h>=6 && h<14) return {session:"London",open:true};
+  if(h>=13 && h<21) return {session:"New York",open:true};
+  if(h>=0 && h<9) return {session:"Tokyo",open:true};
+  return {session:"Closed",open:false};
+}
+
+// ⚠️ Risk logic
+function marketRisk(){
+  const m = new Date().getUTCMinutes();
+  return (m<5 || m>55) ? "Risky" : "Safe";
+}
+
+// 🕒 Header update
+function updateHeader(){
+  const now = new Date();
+  const m = marketInfo();
+  const risk = marketRisk();
+
+  document.getElementById("statusLine").innerHTML =
+    `${pair} | ${now.toLocaleString()} | 
+     ${m.open?"🟢 OPEN":"🔴 CLOSED"} (${m.session}) 
+     <span class="badge ${risk==='Safe'?'safe':'risky'}">${risk}</span>`;
+}
+
+updateHeader();
+setInterval(updateHeader,1000);
+
+// 🔔 Signal loader
+let lastKey="";
+
+async function loadSignals(){
+  try{
+    const r = await fetch(
+      "https://live.mkapi009.workers.dev/signals?pair="+pair
+    );
+    const j = await r.json();
+
+    const box = document.getElementById("signals");
+    box.innerHTML="";
+
+    j.signals.forEach(s=>{
+      const key = s.time+s.dir;
+      if(key!==lastKey){
+        navigator.vibrate(200);
+        document.getElementById("beep").play();
+        lastKey=key;
+      }
+
+      box.innerHTML += `
+        <div class="signal ${s.dir.toLowerCase()}">
+          <b>${pair}</b><br>
+          ⏰ ${s.time} | TF ${s.tf}<br>
+          <b>${s.dir}</b> ${s.conf}%
+        </div>
+      `;
+    });
+  }catch(e){
+    document.getElementById("signals").innerHTML =
+      "<p style='color:red;text-align:center'>Failed to load signals</p>";
+  }
+}
+
+loadSignals();
+setInterval(loadSignals,60000);
+</script>
+
+</body>
+</html>

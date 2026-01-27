@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Renew License</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  background:#06090f;
+  color:#f5d27a;
+  font-family:Arial;
+  text-align:center;
+}
+input,button{
+  width:80%;
+  padding:12px;
+  margin:10px;
+  border-radius:8px;
+}
+button{background:gold;font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>🚀 APX Premium Trial</h2>
+<input id="u" placeholder="Username">
+<input id="t" placeholder="Telegram ID">
+<button onclick="send()">Request 10-Day Trial</button>
+<p id="msg"></p>
+
+<script>
+function send(){
+  document.getElementById("msg").innerText =
+   "Request sent. Admin will issue license.";
+}
+</script>
+
+</body>
+</html>
