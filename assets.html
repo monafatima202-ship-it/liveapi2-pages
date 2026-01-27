@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APX Assets</title>
+
+<style>
+body{
+  margin:0;
+  background:#0b0f14;
+  font-family:Segoe UI;
+  color:#fff;
+}
+header{
+  padding:15px;
+  text-align:center;
+  background:#020617;
+  color:#f5c77a;
+  font-weight:600;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  padding:15px;
+}
+.card{
+  background:#020617;
+  border-radius:14px;
+  padding:18px;
+  text-align:center;
+  border:1px solid #1f2937;
+  cursor:pointer;
+}
+.card:hover{
+  border-color:#f5c77a;
+}
+.badge{
+  background:#16a34a;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:12px;
+  display:inline-block;
+  margin-top:8px;
+}
+</style>
+</head>
+
+<body>
+<header>APX PREMIUM ENGINE</header>
+
+<div class="grid">
+  <div class="card" onclick="go('EUR/USD')">EUR/USD<div class="badge">LIVE</div></div>
+  <div class="card" onclick="go('GBP/USD')">GBP/USD<div class="badge">LIVE</div></div>
+  <div class="card" onclick="go('USD/JPY')">USD/JPY<div class="badge">LIVE</div></div>
+  <div class="card" onclick="go('AUD/USD')">AUD/USD<div class="badge">LIVE</div></div>
+  <div class="card" onclick="go('USD/CHF')">USD/CHF<div class="badge">LIVE</div></div>
+  <div class="card" onclick="go('USD/CAD')">USD/CAD<div class="badge">LIVE</div></div>
+</div>
+
+<script>
+function go(pair){
+  location.href="dashboard.html?pair="+encodeURIComponent(pair);
+}
+</script>
+</body>
+</html>
