@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #2b1a00, #050200);
+  font-family: Arial, sans-serif;
+  color: #f5d27a;
+}
+
+/* ===== TOP GLOW HEADER ===== */
+.top-glow {
+  padding: 18px;
+  text-align: center;
+  background: linear-gradient(180deg, #3a2400, #120900);
+  box-shadow: 0 0 30px #f5c26b;
+}
+
+.engine-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffd36a;
+  text-shadow: 0 0 12px #ffcc55;
+}
+
+.engine-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #ffefc1;
+}
+
+/* ===== SIGNAL CARD ===== */
+#signals {
+  padding: 15px;
+}
+
+.signal {
+  background: linear-gradient(145deg, #1a0f00, #2b1800);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 18px rgba(255,200,100,0.25);
+  animation: glowPulse 1.5s infinite alternate;
+}
+
+@keyframes glowPulse {
+  from { box-shadow: 0 0 12px rgba(255,200,100,0.3); }
+  to   { box-shadow: 0 0 25px rgba(255,200,100,0.8); }
+}
+
+.pair {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.dir-call {
+  color: #3cff8f;
+  text-shadow: 0 0 8px #3cff8f;
+}
+
+.dir-put {
+  color: #ff5a5a;
+  text-shadow: 0 0 8px #ff5a5a;
+}
+
+.conf {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+/* ===== BOTTOM BAR ===== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #120900;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  box-shadow: 0 -5px 20px rgba(255,200,100,0.3);
+}
+
+.bottom-bar button {
+  background: #3a2400;
+  border: none;
+  color: #ffd36a;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== TOP HEADER ===== -->
+<div class="top-glow">
+  <div class="engine-title">🚀 APX PREMIUM ENGINE</div>
+  <div class="engine-sub">
+    <span id="market-status">Market: --</span> |
+    <span id="current-time">--:--</span>
+  </div>
+</div>
+
+<!-- ===== SIGNALS ===== -->
+<div id="signals"></div>
+
+<!-- ===== BOTTOM ===== -->
+<div class="bottom-bar">
+  <button onclick="loadSignals()">🔄 Refresh</button>
+  <button onclick="logout()">🚪 Exit</button>
+</div>
+
+<!-- ===== SOUND ===== -->
+<audio id="alertSound">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-interface-hint-notification-911.mp3">
+</audio>
+
+<script>
+const API = "https://live.mkapi009.workers.dev/signals";
+
+/* ===== TIME + MARKET STATUS ===== */
+function updateClock() {
+  const now = new Date();
+  document.getElementById("current-time").innerText =
+    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  const h = now.getUTCHours();
+  const open = (h >= 6 && h <= 20);
+  document.getElementById("market-status").innerText =
+    open ? "Market: OPEN" : "Market: CLOSED";
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ===== LOAD SIGNALS ===== */
+async function loadSignals() {
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+
+    const box = document.getElementById("signals");
+    box.innerHTML = "";
+
+    data.signals.forEach(sig => {
+      vibrate();
+      playSound();
+
+      box.innerHTML += `
+        <div class="signal">
+          <div class="pair">${sig.pair}</div>
+          <div class="${sig.direction === 'CALL' ? 'dir-call' : 'dir-put'}">
+            ${sig.direction} • ${sig.time} (${sig.timeframe})
+          </div>
+          <div class="conf">Confidence: ${sig.confidence}%</div>
+        </div>
+      `;
+    });
+
+  } catch (e) {
+    document.getElementById("signals").innerHTML =
+      "<p style='color:red'>Failed to load signals</p>";
+  }
+}
+
+/* ===== SOUND + VIBRATION ===== */
+function playSound() {
+  document.getElementById("alertSound").play();
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+
+/* ===== AUTO REFRESH ===== */
+setInterval(loadSignals, 60000);
+loadSignals();
+
+/* ===== EXIT ===== */
+function logout() {
+  localStorage.clear();
+  location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
