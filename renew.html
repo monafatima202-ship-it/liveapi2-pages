@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>APX Premium – Get Trial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{background:#0b0f1a;color:#fff;font-family:Arial;padding:20px}
+    .card{background:#12172b;border-radius:14px;padding:16px;max-width:420px;margin:auto}
+    input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:10px}
+    input{background:#0f1430;color:#fff}
+    button{background:#f5c542;color:#000;font-weight:bold;cursor:pointer}
+    small{color:#9aa3c7}
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🚀 APX Premium Trial</h2>
+  <p><small>Create username and request your 10-day trial.</small></p>
+
+  <input id="username" placeholder="Create Username">
+  <input id="telegram" placeholder="Telegram Username (e.g. @name)">
+
+  <button onclick="requestTrial()">Get 10-Day Trial</button>
+</div>
+
+<script>
+const BOT_TOKEN = "8257703398:AAFxxAS6MT5NEjyIIZ33Ahe8OKlQxTXH4-g"; // 🔴 NEW token only
+const OWNER_CHAT_ID = "-1003711655225";       // ✅ your channel/group ID
+
+function requestTrial(){
+  const u = document.getElementById("username").value.trim();
+  const t = document.getElementById("telegram").value.trim();
+  if(!u || !t){ alert("Please fill all fields"); return; }
+
+  const msg =
+`🆕 APX PREMIUM TRIAL REQUEST
+
+👤 Username: ${u}
+📱 Telegram: ${t}
+⏳ Trial: 10 Days
+💰 After Trial: $10 Package`;
+
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      chat_id: OWNER_CHAT_ID,
+      text: msg
+    })
+  }).then(()=>{
+    alert("Request sent. Admin will contact you on Telegram.");
+  }).catch(()=>{
+    alert("Error sending request. Try again.");
+  });
+}
+</script>
+
+</body>
+</html>

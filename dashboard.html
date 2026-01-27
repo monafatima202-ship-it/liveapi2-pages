@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Premium – Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#0b0f1a;
+  --card:#12172b;
+  --gold:#f5c542;
+  --blue:#4da3ff;
+  --red:#ff4d4d;
+}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#fff;
+  font-family:Arial;
+}
+header{
+  background:linear-gradient(90deg,#1a1f3a,#0f1b33);
+  padding:16px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  color:var(--gold);
+}
+.container{padding:14px;}
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 0 18px rgba(0,0,0,.45);
+}
+.signal{
+  background:linear-gradient(145deg,#141a3a,#0c1024);
+  border-left:5px solid var(--blue);
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+.signal.put{border-left-color:var(--red);}
+.badge{
+  display:inline-block;
+  padding:5px 12px;
+  border-radius:18px;
+  font-size:12px;
+  font-weight:bold;
+}
+.call{background:var(--blue);color:#000;}
+.putb{background:var(--red);color:#fff;}
+.conf{background:#1e254a;margin-left:6px;}
+.btns{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+.btn{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.exit{background:#444;color:#fff;}
+.renew{background:var(--gold);color:#000;}
+</style>
+</head>
+
+<body>
+
+<header>⚡ APX PREMIUM ENGINE</header>
+
+<div class="container">
+
+<div class="card">
+  <b>Status:</b> <span style="color:var(--gold)">LIVE</span><br>
+  <b>Plan:</b> PRO<br>
+  <b>Expiry:</b> <span id="exp">--</span>
+</div>
+
+<div class="card">
+  <h3>🔥 Live Signals (M1)</h3>
+  <div id="signals">Loading…</div>
+
+  <div class="btns">
+    <button class="btn exit" onclick="logout()">🚪 Exit</button>
+    <button class="btn renew" onclick="goRenew()">🔁 Renew</button>
+  </div>
+</div>
+
+</div>
+
+<audio id="beep">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
+</audio>
+
+<script>
+const WORKER_URL = "https://live.mkapi009.workers.dev";
+const license = localStorage.getItem("license");
+const device  = navigator.userAgent;
+
+if(!license){
+  window.location.href="index.html";
+}
+
+let lastSignalKey = "";
+
+function playSound(){
+  document.getElementById("beep").play();
+}
+
+async function loadSignals(){
+  const box=document.getElementById("signals");
+  box.innerHTML="Loading…";
+
+  try{
+    const res = await fetch(
+      `${WORKER_URL}?license=${license}&device=${encodeURIComponent(device)}`
+    );
+    const data = await res.json();
+
+    if(data.error){
+      if(data.message && data.message.toLowerCase().includes("expired")){
+        window.location.href="renew.html";
+      }else{
+        box.innerHTML=data.message;
+      }
+      return;
+    }
+
+    document.getElementById("exp").innerText=data.expires;
+    box.innerHTML="";
+
+    data.signals.forEach(s=>{
+      const key = s.pair+s.time+s.direction;
+      if(key !== lastSignalKey){
+        playSound();
+        lastSignalKey = key;
+      }
+
+      const d=document.createElement("div");
+      d.className="signal "+(s.direction==="PUT"?"put":"");
+      d.innerHTML=`
+        <b>${s.pair}</b><br>
+        Time: ${s.time} | TF: ${s.timeframe}<br>
+        <span class="badge ${s.direction==="CALL"?"call":"putb"}">
+          ${s.direction}
+        </span>
+        <span class="badge conf">${s.confidence}%</span>
+      `;
+      box.appendChild(d);
+    });
+
+  }catch(e){
+    box.innerHTML="API error";
+  }
+}
+
+function logout(){
+  localStorage.clear();
+  window.location.href="index.html";
+}
+
+function goRenew(){
+  window.location.href="renew.html";
+}
+
+loadSignals();
+setInterval(loadSignals,60000); // auto refresh 60s
+</script>
+
+</body>
+</html>
