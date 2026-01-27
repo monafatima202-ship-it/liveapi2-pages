@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+</head>
+<body>
+
+<h2>✅ Welcome – License Active</h2>
+<p>Your system is unlocked.</p>
+
+<script>
+const lic = localStorage.getItem("license");
+if (!lic) {
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
