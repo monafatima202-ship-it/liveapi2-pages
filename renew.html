@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>APX Premium – Request</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  background:#050300;
+  color:#f5d27a;
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.box{width:90%;max-width:360px;text-align:center;}
+input,button{
+  width:100%;padding:14px;margin:10px 0;
+  border-radius:10px;border:none;
+}
+button{background:#ffd400;font-weight:bold;}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+
+  <input id="name" placeholder="Your Name">
+  <input id="tg" placeholder="Telegram @username">
+
+  <button onclick="send()">Submit</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+const type = new URLSearchParams(location.search).get("type") || "trial";
+
+async function send(){
+  const name = document.getElementById("name").value.trim();
+  const tg   = document.getElementById("tg").value.trim();
+  if(!name || !tg){
+    alert("Fill all fields");
+    return;
+  }
+
+  const r = await fetch(
+    "https://live.mkapi009.workers.dev/request",
+    {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        name:name,
+        telegram:tg,
+        type:type
+      })
+    }
+  );
+
+  const j = await r.json();
+  if(j.status==="ok"){
+    msg.innerText = "✅ License sent on Telegram";
+  }else{
+    msg.innerText = "❌ Failed";
+  }
+}
+</script>
+</body>
+</html>
