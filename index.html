@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  background:radial-gradient(circle at top,#2b1a00,#050300);
+  font-family:Arial,Helvetica,sans-serif;
+  color:#f5d27a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.box{width:92%;max-width:420px;text-align:center;}
+h1{margin-bottom:22px;}
+input{
+  width:100%;padding:14px;font-size:16px;
+  border-radius:14px;border:none;outline:none;margin-bottom:14px;
+}
+button{
+  width:100%;padding:14px;margin-top:10px;
+  border:none;border-radius:14px;font-size:16px;font-weight:bold;
+}
+.verify{background:#ffd200;color:#000;}
+.trial{background:#333;color:#ffd97a;}
+.buy{background:#2b2b2b;color:#7fd8ff;}
+small{display:block;margin-top:18px;opacity:.8;}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h1>🚀 APX PREMIUM ENGINE</h1>
+
+  <input id="license" placeholder="Enter License Key">
+
+  <button class="verify" onclick="verify()">Verify License</button>
+  <button class="trial" onclick="getTrial()">🎁 Get Free Trial (10 Days)</button>
+  <button class="buy" onclick="buyPlan()">💎 Buy Paid Plan</button>
+
+  <small>Secure • Auto Trial • Expiry Protected</small>
+</div>
+
+<script>
+const API="https://live.mkapi009.workers.dev";
+
+async function verify(){
+  const lic=document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license key");
+
+  try{
+    const r=await fetch(API+"/verify?license="+encodeURIComponent(lic));
+    const j=await r.json();
+    if(j.ok){
+      localStorage.setItem("license",lic);
+      location.href="asset.html";   // ✅ FIX
+    }else{
+      alert("Invalid or expired license");
+    }
+  }catch(e){
+    alert("Server error");
+  }
+}
+
+async function getTrial(){
+  const lic=document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license first");
+  await fetch(API+"/trial?license="+encodeURIComponent(lic));
+  alert("Trial activated. Check Telegram.");
+}
+
+async function buyPlan(){
+  const lic=document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license first");
+  await fetch(API+"/buy?license="+encodeURIComponent(lic));
+  alert("Purchase request sent to admin.");
+}
+</script>
+</body>
+</html>
