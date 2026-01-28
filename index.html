@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  margin:0;
+  background:#000;
+  color:#ffd46a;
+  font-family:Arial;
+  text-align:center;
+}
+.box{
+  margin-top:100px;
+}
+input{
+  width:80%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+}
+button{
+  width:80%;
+  margin-top:15px;
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+}
+.verify{background:#ffd000;}
+.trial{background:#333;color:#fff;}
+.buy{background:#444;color:#7dd3ff;}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+
+  <input id="license" placeholder="Enter License Key">
+
+  <button class="verify" onclick="verify()">Verify License</button>
+  <button class="trial" onclick="trial()">🎁 Get Free Trial (10 Days)</button>
+  <button class="buy" onclick="buy()">💎 Buy Paid Plan</button>
+</div>
+
+<script>
+const API = "https://live.mkapi009.workers.dev";
+
+function verify(){
+  const lic = license.value.trim();
+  if(!lic) return alert("Enter license");
+  localStorage.setItem("license", lic);
+  location.href="asset.html";
+}
+
+function trial(){
+  const lic = license.value.trim();
+  if(!lic) return alert("Enter license first");
+  fetch(API+"/trial?license="+encodeURIComponent(lic))
+    .then(()=>alert("Trial activated (10 Days)"));
+}
+
+function buy(){
+  const lic = license.value.trim();
+  if(!lic) return alert("Enter license first");
+  fetch(API+"/buy?license="+encodeURIComponent(lic))
+    .then(()=>alert("Admin notified for paid plan"));
+}
+</script>
+</body>
+</html>
