@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  margin:0;
+  background:#000;
+  color:#f5d27a;
+  font-family:Arial;
+  text-align:center;
+}
+.box{
+  margin-top:120px;
+}
+input{
+  width:80%;
+  padding:15px;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+}
+button{
+  margin-top:15px;
+  width:85%;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  background:gold;
+  font-size:16px;
+  font-weight:bold;
+}
+.alt{
+  background:#333;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+
+  <input id="lic" placeholder="Enter License Key">
+
+  <button onclick="verify()">Verify License</button>
+
+  <div id="extra" style="display:none">
+    <button class="alt" onclick="trial()">🎁 Get 10-Day Trial</button>
+    <button class="alt" onclick="paid()">💎 Buy Paid Plan</button>
+  </div>
+</div>
+
+<script>
+async function verify(){
+  const l = document.getElementById("lic").value.trim();
+  if(!l) return alert("Enter license");
+
+  try{
+    const r = await fetch(
+      "https://live.mkapi009.workers.dev/?license="+l+"&device=web"
+    );
+    const j = await r.json();
+
+    if(j.status==="ok"){
+      localStorage.setItem("license",l);
+      location.href="asset.html";
+    }else{
+      document.getElementById("extra").style.display="block";
+    }
+  }catch{
+    document.getElementById("extra").style.display="block";
+  }
+}
+
+function trial(){
+  alert("Trial request sent. Admin will activate.");
+}
+function paid(){
+  alert("Contact admin on Telegram for paid plan.");
+}
+</script>
+</body>
+</html>

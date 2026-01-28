@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>APX Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  margin:0;
+  background:radial-gradient(circle,#2b1a00,#050300);
+  font-family:Arial;
+  color:#f5d27a;
+}
+.header{
+  padding:18px;
+  text-align:center;
+  background:#1a1200;
+  box-shadow:0 0 25px gold;
+}
+.signal{
+  margin:15px;
+  padding:15px;
+  background:#111;
+  border-left:6px solid gold;
+  border-radius:12px;
+}
+.call{border-color:#00ff99}
+.put{border-color:#ff5555}
+button{
+  width:45%;
+  margin:10px;
+  padding:12px;
+  background:#3a2600;
+  color:#f5d27a;
+  border:none;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+  <div id="top"></div>
+</div>
+
+<div id="signals"></div>
+
+<div style="text-align:center">
+  <button onclick="location.reload()">🔄 Refresh</button>
+  <button onclick="location.href='asset.html'">⬅ Assets</button>
+</div>
+
+<audio id="beep">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+if(!localStorage.getItem("license")) location.href="index.html";
+
+const pair = new URLSearchParams(location.search).get("pair") || "EUR/USD";
+const top = document.getElementById("top");
+top.innerText = pair+" | "+new Date().toLocaleTimeString()+" | Market OPEN";
+
+let last="";
+
+async function load(){
+  try{
+    const r = await fetch(
+      "https://live.mkapi009.workers.dev/signals?pair="+pair
+    );
+    const j = await r.json();
+    const box = document.getElementById("signals");
+    box.innerHTML="";
+
+    j.signals.forEach(s=>{
+      const k=s.time+s.dir;
+      if(k!==last){
+        navigator.vibrate(200);
+        document.getElementById("beep").play();
+        last=k;
+      }
+      box.innerHTML+=`
+        <div class="signal ${s.dir.toLowerCase()}">
+          <b>${pair}</b><br>
+          ⏰ ${s.time} | TF ${s.tf}<br>
+          <b>${s.dir}</b> ${s.conf}%
+        </div>`;
+    });
+  }catch{
+    document.getElementById("signals").innerHTML=
+      "<p style='color:red;text-align:center'>Signals unavailable</p>";
+  }
+}
+
+load();
+setInterval(load,60000);
+</script>
+
+</body>
+</html>
