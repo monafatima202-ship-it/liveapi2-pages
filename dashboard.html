@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:radial-gradient(circle at center,#06241c,#020807);
+  color:#64ffda;
+}
+
+/* CENTER */
+.center{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+/* RING */
+.ring{
+  width:170px;height:170px;
+  border-radius:50%;
+  border:4px solid rgba(100,255,218,.15);
+  border-top:4px solid #64ffda;
+  animation:spin 2s linear infinite;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icon{font-size:38px}
+
+/* TEXT */
+h1{margin:20px 0 6px;letter-spacing:2px}
+.sub{font-size:14px;opacity:.85}
+
+/* BAR */
+.bar{
+  width:70%;height:8px;
+  background:rgba(255,255,255,.1);
+  border-radius:10px;
+  overflow:hidden;
+  margin:15px 0 5px;
+}
+.fill{
+  height:100%;width:100%;
+  background:linear-gradient(90deg,#64ffda,#00c9a7);
+}
+
+/* SIGNAL CARD */
+.signal{
+  width:85%;
+  margin-top:18px;
+  padding:14px;
+  border-radius:16px;
+  background:#041b15;
+  box-shadow:0 0 18px rgba(0,255,200,.35);
+  text-align:left;
+}
+.safe{border-left:6px solid #00ff99}
+.risky{border-left:6px solid #ff5555}
+
+.glow{
+  animation:glow 1s infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 12px #00ffcc}
+  to{box-shadow:0 0 28px #00ffcc}
+}
+
+/* BADGE */
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:bold;
+}
+.safe-b{background:#00ff99;color:#003b2f}
+.risky-b{background:#ff5555;color:#3b0000}
+
+/* BUTTON */
+.btn{
+  margin:30px 0;
+  padding:14px 34px;
+  background:#ffd000;
+  color:#000;
+  border:none;
+  border-radius:16px;
+  font-size:16px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="center">
+
+  <div class="ring"><div class="icon">📡</div></div>
+
+  <h1>APX PREMIUM ENGINE</h1>
+  <div class="sub" id="status">ESTABLISHING SECURE CONNECTION</div>
+
+  <div class="bar"><div class="fill"></div></div>
+  <div class="sub" id="countdown">Next signal in: --</div>
+
+  <div id="signals"></div>
+
+  <button class="btn" onclick="location.href='assets.html'">ENTER ASSETS</button>
+</div>
+
+<audio id="tone">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+/* ================= LICENSE CHECK ================= */
+const API="https://live.mkapi009.workers.dev";
+const lic=localStorage.getItem("license");
+if(!lic) location.href="index.html";
+
+fetch(API+"/verify?license="+lic).then(r=>r.json()).then(j=>{
+  if(!j.ok){localStorage.removeItem("license");location.href="index.html";}
+});
+
+/* ================= PAIR ================= */
+const pair=new URLSearchParams(location.search).get("pair")||"USD_JPY";
+
+/* ================= COUNTDOWN ================= */
+function startCountdown(){
+  setInterval(()=>{
+    const now=new Date();
+    const sec=60-now.getUTCSeconds();
+    document.getElementById("countdown").innerText=
+      "Next signal in: "+sec+"s";
+  },1000);
+}
+startCountdown();
+
+/* ================= SIGNAL ENGINE ================= */
+async function loadSignal(){
+try{
+  const r=await fetch(
+    "https://milongazi197.serv00.net/candle_data.php?instrument="+pair+"&count=2"
+  );
+  const j=await r.json();
+  const c=j.data[0];
+
+  // Candle body %
+  const body=Math.abs(c.close-c.open);
+  const range=Math.abs(c.high-c.low);
+  const confidence=Math.min(95,Math.max(60,Math.round((body/range)*100)));
+
+  const dir=c.close>c.open?"CALL":"PUT";
+  const safe=confidence>=80;
+
+  // ENTRY TIME (NEXT MINUTE)
+  const entry=new Date();
+  entry.setUTCSeconds(0);
+  entry.setUTCMinutes(entry.getUTCMinutes()+1);
+  const time=entry.toUTCString().slice(17,25);
+
+  document.getElementById("signals").innerHTML=`
+    <div class="signal ${safe?'safe glow':'risky'}">
+      <b>${pair.replace("_"," / ")}</b><br>
+      ⏰ ${time} (UTC)<br>
+      📈 Direction: <b>${dir}</b><br>
+      📊 Confidence: ${confidence}%<br>
+      <span class="badge ${safe?'safe-b':'risky-b'}">
+        ${safe?'SAFE':'RISKY'}
+      </span>
+    </div>
+  `;
+
+  document.getElementById("status").innerText="LIVE MARKET • "+pair;
+
+  if(safe) document.getElementById("tone").play();
+
+}catch{
+  document.getElementById("signals").innerHTML=`
+    <div class="signal risky">
+      Signal server offline
+    </div>`;
+}
+}
+
+loadSignal();
+setInterval(loadSignal,60000);
+</script>
+
+</body>
+</html>
