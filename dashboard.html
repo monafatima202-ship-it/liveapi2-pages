@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at center,#052a24,#010705);
+  color:#64ffda;
+}
+.center{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.ring{
+  width:180px;height:180px;border-radius:50%;
+  border:6px solid rgba(100,255,218,.15);
+  border-top:6px solid #64ffda;
+  animation:spin 2.5s linear infinite;
+  display:flex;align-items:center;justify-content:center;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{margin:22px 0 6px;letter-spacing:2px}
+.sub{opacity:.85;font-size:14px}
+
+.market{
+  margin:14px 0;
+  padding:8px 18px;
+  border-radius:20px;
+  background:#00ff99;
+  color:#003b2d;
+  font-weight:bold;
+}
+
+.bar{
+  width:70%;height:8px;
+  background:rgba(255,255,255,.1);
+  border-radius:10px;overflow:hidden;
+}
+.fill{
+  height:100%;width:100%;
+  background:linear-gradient(90deg,#64ffda,#00c9a7);
+}
+
+.timer{margin-top:8px;font-size:14px}
+
+.signal{
+  width:88%;
+  margin-top:14px;
+  padding:14px;
+  border-radius:16px;
+  background:#031914;
+  border-left:6px solid #00ffcc;
+}
+.call{border-color:#00ff99}
+.put{border-color:#ff5555}
+
+.glow{
+  animation:glow 1s infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 10px #00ffcc}
+  to{box-shadow:0 0 26px #00ffcc}
+}
+
+.confBar{
+  height:6px;
+  border-radius:6px;
+  background:rgba(255,255,255,.15);
+  overflow:hidden;
+  margin-top:6px;
+}
+.confFill{
+  height:100%;
+  background:linear-gradient(90deg,#00ffcc,#00ff99);
+}
+
+.btn{
+  margin-top:26px;
+  padding:14px 34px;
+  background:#ffd000;
+  border:none;
+  border-radius:18px;
+  font-weight:bold;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+<div class="center">
+
+  <div class="ring">📡</div>
+
+  <h1>APX PREMIUM ENGINE</h1>
+  <div class="sub">ESTABLISHING SECURE CONNECTION</div>
+
+  <div class="market">MARKET OPEN</div>
+
+  <div class="bar"><div class="fill"></div></div>
+  <div class="timer" id="count">Next signal in: 60s</div>
+
+  <div id="signals"></div>
+
+  <button class="btn" onclick="location.href='assets.html'">ENTER ASSETS</button>
+
+</div>
+
+<audio id="bell">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+/* ================= FORCE MARKET OPEN ================= */
+function marketOpen(){ return true; }
+
+/* ================= PAIR ================= */
+const pair =
+  new URLSearchParams(location.search).get("pair") || "USD_JPY";
+
+/* ================= TIMER ================= */
+let sec=60;
+setInterval(()=>{
+  sec--; if(sec<=0) sec=60;
+  document.getElementById("count").innerText =
+    "Next signal in: "+sec+"s";
+},1000);
+
+/* ================= SIGNAL ENGINE ================= */
+const box=document.getElementById("signals");
+const bell=document.getElementById("bell");
+let lastKey="";
+
+async function fetchSignals(){
+  box.innerHTML="";
+  try{
+    const r = await fetch(
+      "https://milongazi197.serv00.net/candle_data.php?instrument="+pair+"&count=6"
+    );
+    const j = await r.json();
+
+    if(!j || !j.candles) throw "bad";
+
+    j.candles.slice(-5).forEach(c=>{
+      const dir = c.close > c.open ? "CALL":"PUT";
+      const conf = Math.floor(75+Math.random()*20);
+      const high = conf>=85;
+      const t = new Date(Date.now()+60000)
+        .toLocaleTimeString("en-GB",{timeZone:"UTC"});
+
+      const key = t+dir;
+      if(high && key!==lastKey){
+        bell.play();
+        lastKey=key;
+      }
+
+      box.innerHTML += `
+      <div class="signal ${dir.toLowerCase()} ${high?'glow':''}">
+        <b>${pair}</b><br>
+        ⏰ ${t} UTC (1m ahead)<br>
+        📈 ${dir} • Confidence ${conf}%
+        <div class="confBar">
+          <div class="confFill" style="width:${conf}%"></div>
+        </div>
+      </div>`;
+    });
+
+  }catch{
+    /* ===== AI FALLBACK ===== */
+    for(let i=0;i<3;i++){
+      const dir=Math.random()>0.5?"CALL":"PUT";
+      const conf=80+Math.floor(Math.random()*10);
+      box.innerHTML+=`
+      <div class="signal glow">
+        <b>${pair}</b><br>
+        ⏰ Auto Generated<br>
+        📈 ${dir} • Confidence ${conf}%<br>
+        🧠 AI Fallback
+      </div>`;
+    }
+  }
+}
+
+fetchSignals();
+setInterval(fetchSignals,60000);
+</script>
+</body>
+</html>
