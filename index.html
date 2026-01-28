@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle,#1b1200,#050300);
+  font-family:Arial,Helvetica,sans-serif;
+  color:#f5d27a;
+}
+
+.box{
+  width:90%;
+  max-width:420px;
+  text-align:center;
+}
+
+h1{
+  margin-bottom:25px;
+  letter-spacing:1px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  border-radius:12px;
+  border:none;
+  margin-bottom:15px;
+}
+
+.btn{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.verify{background:#ffd200;color:#000;}
+.trial{background:#333;color:#ffd97a;}
+.buy{background:#333;color:#9ee7ff;}
+
+small{
+  display:block;
+  margin-top:18px;
+  opacity:.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h1>🚀 APX PREMIUM ENGINE</h1>
+
+  <input id="license" placeholder="Enter License Key">
+
+  <button class="btn verify" onclick="verifyLicense()">Verify License</button>
+  <button class="btn trial" onclick="getTrial()">🎁 Get Trial</button>
+  <button class="btn buy" onclick="buyPlan()">💎 Buy Plan</button>
+
+  <small>Secure • Auto Trial • Expiry Protected</small>
+</div>
+
+<script>
+const API = "https://live.mkapi009.workers.dev";
+
+/* ✅ VERIFY LICENSE */
+async function verifyLicense(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license key");
+
+  try{
+    const r = await fetch(API+"/verify?license="+encodeURIComponent(lic));
+    const j = await r.json();
+
+    if(j.status === "active"){
+      localStorage.setItem("license", lic);
+      location.href = "assets.html";
+    }else if(j.status === "expired"){
+      alert("License expired. Please renew.");
+      location.href = "renew.html";
+    }else{
+      alert("Invalid license");
+    }
+  }catch{
+    alert("Server error. Try again.");
+  }
+}
+
+/* 🎁 TRIAL REQUEST */
+async function getTrial(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license first");
+
+  try{
+    await fetch(API+"/trial?license="+encodeURIComponent(lic));
+    alert("Trial request sent. Trial will auto-activate.");
+  }catch{
+    alert("Server error");
+  }
+}
+
+/* 💎 BUY PLAN */
+async function buyPlan(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic) return alert("Enter license first");
+
+  try{
+    await fetch(API+"/buy?license="+encodeURIComponent(lic));
+    alert("Purchase request sent to admin.");
+  }catch{
+    alert("Server error");
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  background:radial-gradient(circle,#2b1a00,#050300);
+  font-family:Arial,Helvetica,sans-serif;
+  color:#f5d27a;
+}
+
+.header{
+  padding:18px;
+  text-align:center;
+  background:linear-gradient(90deg,#3a2400,#1a0f00);
+  box-shadow:0 0 30px gold;
+}
+
+.header h2{
+  margin:0;
+  letter-spacing:1px;
+}
+
+.header small{
+  display:block;
+  margin-top:6px;
+  opacity:.8;
+}
+
+.signal{
+  margin:16px;
+  padding:16px;
+  background:#111;
+  border-left:6px solid gold;
+  border-radius:14px;
+  box-shadow:0 0 14px rgba(255,215,100,.25);
+}
+
+.call{border-color:#00ff99}
+.put{border-color:#ff5555}
+
+.meter{
+  width:100%;
+  height:10px;
+  background:#222;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.meter-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00ff99,#ffd200);
+  border-radius:20px;
+  transition:width 1s ease;
+  box-shadow:0 0 12px gold;
+}
+
+.controls{
+  text-align:center;
+  padding:10px;
+}
+
+button{
+  width:45%;
+  margin:8px;
+  padding:12px;
+  background:#3a2600;
+  color:#f5d27a;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>🚀 APX PREMIUM ENGINE</h2>
+  <small id="topInfo"></small>
+</div>
+
+<div id="signals"></div>
+
+<div class="controls">
+  <button onclick="location.reload()">🔄 Refresh</button>
+  <button onclick="location.href='asset.html'">⬅ Assets</button>
+</div>
+
+<!-- 🔔 Sound -->
+<audio id="beep">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+// 🔐 License check
+if(!localStorage.getItem("license")){
+  location.href="index.html";
+}
+
+// 📌 Pair
+const pair = new URLSearchParams(location.search).get("pair");
+if(!pair) location.href="asset.html";
+
+// 🕒 Header info
+function updateHeader(){
+  document.getElementById("topInfo").innerText =
+    pair.replace("_","/")+" | "+new Date().toLocaleString();
+}
+updateHeader();
+setInterval(updateHeader,1000);
+
+// 🔔 Sound only for HIGH confidence
+let lastKey = "";
+
+async function loadSignals(){
+  try{
+    const r = await fetch(
+      "https://live.mkapi009.workers.dev/signals?pair="+pair
+    );
+    const j = await r.json();
+    const box = document.getElementById("signals");
+    box.innerHTML = "";
+
+    j.signals.forEach(s=>{
+      const key = s.time + s.dir + s.conf;
+
+      // 🔔 Sound + vibration ONLY if confidence >= 80
+      if(s.conf >= 80 && key !== lastKey){
+        document.getElementById("beep").play();
+        navigator.vibrate(200);
+        lastKey = key;
+      }
+
+      box.innerHTML += `
+        <div class="signal ${s.dir.toLowerCase()}">
+          <b>${pair.replace("_","/")}</b><br>
+          ⏰ ${s.time} | TF ${s.tf}<br>
+          <b>${s.dir}</b> ${s.conf}%
+
+          <div class="meter">
+            <div class="meter-fill" style="width:${s.conf}%"></div>
+          </div>
+        </div>
+      `;
+    });
+
+  }catch{
+    document.getElementById("signals").innerHTML =
+      "<p style='color:red;text-align:center'>Failed to load signals</p>";
+  }
+}
+
+loadSignals();
+setInterval(loadSignals,60000); // M1 refresh
+</script>
+
+</body>
+</html>
