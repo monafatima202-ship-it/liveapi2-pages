@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  background:#050300;color:#f5d27a;
+  font-family:Arial;text-align:center;padding-top:60px;
+}
+.card{
+  background:#111;padding:20px;
+  border-radius:16px;margin:14px;
+}
+button{
+  padding:12px 26px;
+  border-radius:14px;border:none;
+  background:#ffd200;color:#000;
+}
+</style>
+</head>
+
+<body>
+<h1>🚀 APX DASHBOARD</h1>
+
+<div class="card">
+  <h3>Live Signals</h3>
+  <p>Signals fetched from engine</p>
+</div>
+
+<button onclick="back()">← Assets</button>
+
+<script>
+if(!localStorage.getItem("license")){
+  location.href="index.html";
+}
+function back(){
+  location.href="asset.html";
+}
+</script>
+</body>
+</html>

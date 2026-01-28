@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Assets</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  background:#050300;color:#f5d27a;
+  font-family:Arial;text-align:center;padding-top:80px;
+}
+button{
+  padding:14px 30px;
+  border-radius:14px;border:none;
+  font-size:16px;font-weight:bold;
+  margin:10px;
+}
+.go{background:#ffd200;color:#000;}
+.out{background:#333;color:#fff;}
+</style>
+</head>
+
+<body>
+<h1>📊 APX ASSETS</h1>
+
+<button class="go" onclick="goDash()">Open Dashboard</button>
+<button class="out" onclick="logout()">Logout</button>
+
+<script>
+const API="https://live.mkapi009.workers.dev";
+const lic=localStorage.getItem("license");
+
+if(!lic) location.href="index.html";
+
+fetch(API+"/verify?license="+encodeURIComponent(lic))
+.then(r=>r.json())
+.then(j=>{
+  if(!j.ok){
+    localStorage.removeItem("license");
+    location.href="index.html";
+  }
+});
+
+function goDash(){
+  location.href="dashboard.html";
+}
+function logout(){
+  localStorage.removeItem("license");
+  location.href="index.html";
+}
+</script>
+</body>
+</html>
