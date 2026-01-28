@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:radial-gradient(circle,#2b1a00,#050300);
+  color:#f5d27a;
+  text-align:center;
+}
+
+h1{
+  margin-top:60px;
+  letter-spacing:1px;
+}
+
+input{
+  width:90%;
+  padding:14px;
+  font-size:16px;
+  border-radius:12px;
+  border:none;
+  margin-top:30px;
+}
+
+button{
+  width:90%;
+  padding:14px;
+  margin-top:15px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.verify{
+  background:#ffd200;
+}
+
+.trial{
+  background:#333;
+  color:#fff;
+}
+
+.buy{
+  background:#111;
+  color:#ffd200;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚀 APX PREMIUM ENGINE</h1>
+
+<input id="license" placeholder="Enter License Key">
+
+<button class="verify" onclick="verifyLicense()">
+✅ Verify License
+</button>
+
+<button class="trial" onclick="getTrial()">
+🎁 Get 10-Day Trial
+</button>
+
+<button class="buy" onclick="buyPlan()">
+💎 Buy Paid Plan
+</button>
+
+<script>
+const API = "https://live.mkapi009.workers.dev";
+
+/* VERIFY LICENSE */
+function verifyLicense(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic){
+    alert("Enter license key");
+    return;
+  }
+
+  localStorage.setItem("license", lic);
+  location.href = "dashboard.html";
+}
+
+/* GET TRIAL */
+async function getTrial(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic){
+    alert("Enter license first");
+    return;
+  }
+
+  try{
+    const r = await fetch(
+      API + "/trial?license=" + encodeURIComponent(lic)
+    );
+    if(!r.ok) throw "error";
+    alert("Trial request sent. Admin will activate.");
+  }catch{
+    alert("Server error. Try again.");
+  }
+}
+
+/* BUY PLAN */
+async function buyPlan(){
+  const lic = document.getElementById("license").value.trim();
+  if(!lic){
+    alert("Enter license first");
+    return;
+  }
+
+  try{
+    const r = await fetch(
+      API + "/buy?license=" + encodeURIComponent(lic)
+    );
+    if(!r.ok) throw "error";
+    alert("Purchase request sent to admin.");
+  }catch{
+    alert("Server error. Try again.");
+  }
+}
+</script>
+
+</body>
+</html>
