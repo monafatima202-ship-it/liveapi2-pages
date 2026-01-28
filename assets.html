@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#050300;color:#ffd27a;font-family:Arial">
+<h2 style="text-align:center">Select Pair</h2>
+
+<button onclick="go('EUR_USD')">EUR/USD</button>
+<button onclick="go('GBP_USD')">GBP/USD</button>
+<button onclick="go('USD_JPY')">USD/JPY</button>
+
+<script>
+if(!localStorage.getItem("license")) location.href="index.html";
+function go(p){
+  location.href="dashboard.html?pair="+p;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#050300;color:#ffd27a;font-family:Arial">
+<h2 id="top"></h2>
+<div id="box"></div>
+
+<script>
+if(!localStorage.getItem("license")) location.href="index.html";
+
+const pair = new URLSearchParams(location.search).get("pair");
+if(!pair) location.href="asset.html";
+
+top.innerText = pair.replace("_","/")+" | LIVE";
+
+async function load(){
+  const r = await fetch(
+    "https://live.mkapi009.workers.dev/signals?pair="+pair
+  );
+  const j = await r.json();
+  box.innerHTML="";
+  j.signals.forEach(s=>{
+    box.innerHTML+=`
+      <p>${s.time} ${s.dir} ${s.conf}%</p>
+    `;
+  });
+}
+load();
+setInterval(load,60000);
+</script>
+</body>
+</html>
