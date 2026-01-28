@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at center,#0a2b22,#020807);
+  color:#64ffda;
+}
+
+/* ===== CENTER ===== */
+.center{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+/* ===== RING ===== */
+.ring{
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  border:5px solid rgba(100,255,218,.15);
+  border-top:5px solid #64ffda;
+  animation:spin 2.5s linear infinite;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:15px;
+}
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+.icon{font-size:42px}
+
+/* ===== TEXT ===== */
+h1{
+  margin:10px 0 6px;
+  letter-spacing:2px;
+}
+.sub{
+  font-size:14px;
+  opacity:.85;
+  margin-bottom:12px;
+}
+
+/* ===== MARKET BADGE ===== */
+.badge{
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:12px;
+  margin-bottom:12px;
+}
+.open{background:#003b2e;color:#00ffb3}
+.closed{background:#3b0000;color:#ff5555}
+
+/* ===== BAR ===== */
+.bar{
+  width:75%;
+  height:8px;
+  background:rgba(255,255,255,.12);
+  border-radius:10px;
+  overflow:hidden;
+}
+.fill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,#64ffda,#00c9a7);
+}
+.countdown{
+  font-size:13px;
+  margin:8px 0 18px;
+  opacity:.85;
+}
+
+/* ===== SIGNAL CARD ===== */
+.signal{
+  width:85%;
+  padding:16px;
+  border-radius:16px;
+  background:#041b15;
+  border-left:6px solid #00ffcc;
+  box-shadow:0 0 18px rgba(0,255,200,.25);
+}
+.safe{border-color:#00ff99}
+.risky{border-color:#ff5555}
+
+/* ===== CONFIDENCE BAR ===== */
+.confbox{
+  margin-top:10px;
+}
+.confbar{
+  width:100%;
+  height:6px;
+  background:#00241c;
+  border-radius:10px;
+  overflow:hidden;
+}
+.conffill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00ff99,#64ffda);
+  transition:width 1s ease;
+}
+.tag{
+  margin-top:6px;
+  font-size:12px;
+}
+
+/* ===== GLOW ===== */
+.glow{
+  animation:glow 1s infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 12px #00ffcc}
+  to{box-shadow:0 0 28px #00ffcc}
+}
+
+/* ===== BUTTON ===== */
+.btn{
+  margin-top:26px;
+  padding:15px 36px;
+  background:#ffd000;
+  color:#000;
+  border:none;
+  border-radius:16px;
+  font-size:16px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="center">
+
+  <div class="ring"><div class="icon">📡</div></div>
+
+  <h1>APX PREMIUM ENGINE</h1>
+  <div class="sub">ESTABLISHING SECURE CONNECTION</div>
+
+  <div id="market" class="badge"></div>
+
+  <div class="bar"><div class="fill"></div></div>
+  <div class="countdown" id="countdown">Next signal in: --s</div>
+
+  <div id="signals"></div>
+
+  <button class="btn" onclick="goAssets()">ENTER ASSETS</button>
+
+</div>
+
+<audio id="tone">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3">
+</audio>
+
+<script>
+/* ===== LICENSE CHECK ===== */
+const API = "https://live.mkapi009.workers.dev";
+const lic = localStorage.getItem("license");
+if(!lic) location.href="index.html";
+fetch(API+"/verify?license="+encodeURIComponent(lic))
+.then(r=>r.json()).then(j=>{
+  if(!j.ok){localStorage.removeItem("license");location.href="index.html";}
+});
+
+/* ===== PAIR ===== */
+const pair = new URLSearchParams(location.search).get("pair") || "USD_JPY";
+
+/* ===== MARKET STATUS ===== */
+function marketStatus(){
+  const d=new Date();
+  const day=d.getUTCDay();
+  const hr=d.getUTCHours();
+  const open = !(day===0||day===6) && hr>=0 && hr<=22;
+  const m=document.getElementById("market");
+  m.className="badge "+(open?"open":"closed");
+  m.innerText=open?"MARKET OPEN":"MARKET CLOSED";
+}
+marketStatus();
+
+/* ===== COUNTDOWN ===== */
+let sec=60;
+setInterval(()=>{
+  sec--; if(sec<=0) sec=60;
+  document.getElementById("countdown").innerText="Next signal in: "+sec+"s";
+},1000);
+
+/* ===== SIGNAL ENGINE (REAL CANDLE) ===== */
+async function loadSignal(){
+try{
+const r=await fetch(
+"https://milongazi197.serv00.net/candle_data.php?instrument="+pair+"&count=5"
+);
+const d=await r.json();
+if(!Array.isArray(d)) throw "bad";
+
+const c=d[d.length-2];
+const o=parseFloat(c.open), cl=parseFloat(c.close),
+h=parseFloat(c.high), l=parseFloat(c.low);
+const body=Math.abs(cl-o), range=Math.max(.00001,Math.abs(h-l));
+const conf=Math.min(95,Math.max(65,Math.round((body/range)*100)));
+const dir=cl>o?"CALL":"PUT";
+const safe=conf>=80;
+
+const t=new Date(); t.setUTCSeconds(0); t.setUTCMinutes(t.getUTCMinutes()+1);
+const time=t.toUTCString().slice(17,25);
+
+document.getElementById("signals").innerHTML=`
+<div class="signal ${safe?'safe glow':'risky'}">
+<b>${pair.replace("_"," / ")}</b><br>
+⏰ ${time} UTC (1 min ahead)<br>
+📈 ${dir}<br>
+<div class="confbox">
+<div class="confbar"><div class="conffill" style="width:${conf}%"></div></div>
+<div class="tag">Confidence: ${conf}% • ${safe?'SAFE':'RISKY'}</div>
+</div>
+</div>`;
+if(safe) document.getElementById("tone").play();
+
+}catch{
+document.getElementById("signals").innerHTML=`
+<div class="signal risky">Signal server offline</div>`;
+}
+}
+loadSignal();
+setInterval(loadSignal,60000);
+
+/* ===== ASSETS ===== */
+function goAssets(){location.href="assets.html";}
+</script>
+
+</body>
+</html>
