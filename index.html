@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#000;color:#ffd000;font-family:Arial;text-align:center}
+.box{max-width:400px;margin:80px auto}
+input,button{width:100%;padding:14px;margin:10px 0}
+button{background:#ffd000;border:none;font-weight:bold}
+</style>
+</head>
+
+<body>
+<div class="box">
+<h2>🚀 APX PREMIUM ENGINE</h2>
+
+<input id="license" placeholder="License Key">
+<button onclick="verify()">VERIFY LICENSE</button>
+<button onclick="trial()">🎁 GET FREE TRIAL (10 DAYS)</button>
+</div>
+
+<script>
+const API = "https://live.mkapi009.workers.dev";
+
+function device(){
+  let d = localStorage.getItem("APX_DEVICE");
+  if(!d){
+    d="DEV-"+Math.random().toString(36).slice(2,10);
+    localStorage.setItem("APX_DEVICE",d);
+  }
+  return d;
+}
+
+async function trial(){
+  const r = await fetch(API+"/trial",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      device: device(),
+      telegram: "" // optional
+    })
+  });
+  const j = await r.json();
+  if(j.ok){
+    license.value=j.license;
+    alert("Trial Activated\nLicense: "+j.license);
+  }else{
+    alert(j.reason || "Trial not available");
+  }
+}
+
+async function verify(){
+  const lic = license.value.trim();
+  if(!lic) return alert("Enter license");
+  const r = await fetch(API+"/verify?license="+lic);
+  const j = await r.json();
+  if(j.ok){
+    alert("License OK\nExpiry: "+new Date(j.expires).toDateString());
+    location.href="dashboard.html";
+  }else{
+    alert("Invalid / Expired");
+  }
+}
+</script>
+</body>
+</html>

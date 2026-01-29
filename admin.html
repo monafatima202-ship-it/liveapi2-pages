@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:radial-gradient(circle at top,#2a1a00,#050300);
+  color:#f5d27a;
+}
+.wrap{
+  max-width:1000px;
+  margin:40px auto;
+  padding:20px;
+  background:#1a1200;
+  border-radius:14px;
+  box-shadow:0 0 25px rgba(255,208,0,.25);
+}
+h2{
+  margin:0 0 20px;
+  text-align:center;
+}
+.login{
+  text-align:center;
+  margin-bottom:20px;
+}
+input{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  width:260px;
+  font-size:14px;
+}
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  background:#ffd000;
+  font-weight:bold;
+  cursor:pointer;
+}
+button.danger{
+  background:#ff5c5c;
+  color:#000;
+}
+button.small{
+  padding:6px 10px;
+  font-size:12px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #3a2a00;
+  text-align:center;
+  font-size:14px;
+}
+th{
+  background:#2a1a00;
+}
+.status-ok{ color:#7CFF9E; font-weight:bold }
+.status-ban{ color:#FF7C7C; font-weight:bold }
+.top-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:10px;
+}
+.note{
+  font-size:12px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+  <h2>🔐 APX ADMIN PANEL</h2>
+
+  <!-- LOGIN -->
+  <div class="login">
+    <input id="pass" type="password" placeholder="Admin Password">
+    <button onclick="login()">LOGIN</button>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="top-actions" id="actions" style="display:none">
+    <div class="note">
+      • +30d = extend license<br>
+      • BAN = disable immediately
+    </div>
+    <button class="small" onclick="loadLicenses()">🔄 Refresh</button>
+  </div>
+
+  <!-- TABLE -->
+  <table id="table" style="display:none">
+    <thead>
+      <tr>
+        <th>License</th>
+        <th>Plan</th>
+        <th>Expiry</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<script>
+const API = "https://live.mkapi009.workers.dev";
+let ADMIN_PASS = "";
+
+/* ================= LOGIN ================= */
+async function login(){
+  ADMIN_PASS = document.getElementById("pass").value.trim();
+  if(!ADMIN_PASS){
+    alert("Enter admin password");
+    return;
+  }
+  await loadLicenses();
+}
+
+/* ================= LOAD LICENSES ================= */
+async function loadLicenses(){
+  const r = await fetch(API + "/admin/list",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ password: ADMIN_PASS })
+  });
+
+  const j = await r.json();
+  if(!j.ok){
+    alert("Wrong password");
+    return;
+  }
+
+  document.getElementById("table").style.display="table";
+  document.getElementById("actions").style.display="flex";
+
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+
+  j.list.forEach(l=>{
+    rows.innerHTML += `
+      <tr>
+        <td>${l.license}</td>
+        <td>${l.plan}</td>
+        <td>${new Date(l.expires).toLocaleString()}</td>
+        <td class="${l.banned?'status-ban':'status-ok'}">
+          ${l.banned?'BANNED':'ACTIVE'}
+        </td>
+        <td>
+          <button class="small" onclick="extendLic('${l.license}',30)">+30d</button>
+          <button class="small danger" onclick="banLic('${l.license}')">BAN</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* ================= EXTEND ================= */
+async function extendLic(license,days){
+  if(!confirm("Extend "+license+" by "+days+" days?")) return;
+
+  await fetch(API + "/admin/extend",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      password: ADMIN_PASS,
+      license: license,
+      days: days
+    })
+  });
+
+  loadLicenses();
+}
+
+/* ================= BAN ================= */
+async function banLic(license){
+  if(!confirm("BAN license "+license+" ?")) return;
+
+  await fetch(API + "/admin/revoke",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      password: ADMIN_PASS,
+      license: license
+    })
+  });
+
+  loadLicenses();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;font-family:Arial;
+  background:radial-gradient(circle at top,#022,#000);
+  color:#7fffe5;
+  padding-top:40px;
+}
+body.lowVol{background:radial-gradient(circle at top,#022,#001)}
+body.medVol{background:radial-gradient(circle at top,#2a2a00,#000)}
+body.highVol{background:radial-gradient(circle at top,#2a0000,#000)}
+
+.container{max-width:420px;margin:auto;padding:20px;text-align:center}
+
+/* ===== TOP ROLLING BAR ===== */
+.topBar{
+  position:fixed;
+  top:0;left:0;width:100%;
+  z-index:9999;
+  background:linear-gradient(90deg,#00ffc6,#00a88a);
+  color:#001;
+  font-size:13px;
+  font-weight:bold;
+  padding:8px 0;
+  overflow:hidden;
+}
+.topBar span{
+  display:inline-block;
+  padding-left:100%;
+  white-space:nowrap;
+  animation:scrollTop 22s linear infinite;
+}
+@keyframes scrollTop{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+
+/* CIRCLE */
+.circleWrap{
+  width:180px;height:180px;margin:20px auto;
+  border-radius:50%;
+  border:6px solid rgba(0,255,200,.2);
+  position:relative
+}
+.circleBar{
+  position:absolute;inset:0;border-radius:50%;
+  border:6px solid transparent;
+  border-top:6px solid #00ffc6;
+  animation:spin 2s linear infinite
+}
+@keyframes spin{100%{transform:rotate(360deg)}}
+
+.signal{
+  background:#012;border-radius:14px;padding:12px;margin:10px 0;
+  border-left:6px solid #00ffc6
+}
+.signal.put{border-color:#ff5c5c}
+
+.confBar{height:6px;background:#044;border-radius:6px;margin-top:6px}
+.confFill{height:100%;background:#00ffc6;border-radius:6px}
+
+.marketBar,.news{
+  background:#022;padding:12px;border-radius:14px;margin:12px 0
+}
+
+.graph{
+  display:flex;gap:6px;height:80px;align-items:flex-end
+}
+.graph div{
+  flex:1;background:#00ffc6;border-radius:4px
+}
+
+button{
+  width:100%;padding:14px;border:none;border-radius:14px;
+  background:#ffd000;font-weight:bold;margin-top:14px
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔥 TOP ROLLING MARKET BAR -->
+<div class="topBar">
+  <span id="topBarText">Loading market status...</span>
+</div>
+
+<div class="container">
+
+  <div class="circleWrap">
+    <div class="circleBar"></div>
+  </div>
+
+  <h2>APX PREMIUM ENGINE</h2>
+
+  <div id="status" class="marketBar">Connecting…</div>
+  <div id="signals"></div>
+
+  <div id="marketBar" class="marketBar">Market condition…</div>
+  <div id="graph" class="graph"></div>
+
+  <div id="news" class="news">Loading news…</div>
+
+  <button onclick="location.href='assets.html'">ENTER ASSETS</button>
+</div>
+
+<audio id="sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+<script>
+const pair = new URLSearchParams(location.search).get("pair") || "EUR_USD";
+const API="https://liveproxy.mkapi009.workers.dev";
+
+const statusBox=document.getElementById("status");
+const box=document.getElementById("signals");
+const marketBar=document.getElementById("marketBar");
+const graph=document.getElementById("graph");
+const newsBox=document.getElementById("news");
+const sound=document.getElementById("sound");
+
+function t6(ms){
+  const d=new Date(ms);
+  d.setHours(d.getHours()+6);
+  return d.toTimeString().slice(0,5)
+}
+
+/* ===== TOP BAR TIME + MARKET STATUS ===== */
+function updateTopBar(){
+  const now=new Date();
+  const utc=new Date(now.getTime()+now.getTimezoneOffset()*60000);
+  const day=utc.getUTCDay();
+  const h=utc.getUTCHours();
+  const m=String(utc.getUTCMinutes()).padStart(2,"0");
+  const s=String(utc.getUTCSeconds()).padStart(2,"0");
+
+  let status,session;
+
+  if(day===0||day===6){
+    status="🔴 MARKET CLOSED (Weekend)";
+    session="Crypto Market Active";
+  }else{
+    status="🟢 MARKET OPEN";
+    if(h<6) session="Asian Session";
+    else if(h<13) session="London Session";
+    else if(h<20) session="New York Session";
+    else session="Late Market";
+  }
+
+  document.getElementById("topBarText").innerText =
+    `${status} • ${session} • ${utc.toDateString()} • ${h}:${m}:${s} UTC • APX Premium Engine`;
+}
+updateTopBar();
+setInterval(updateTopBar,1000);
+
+/* ===== MAIN SIGNAL ENGINE ===== */
+async function load(){
+  box.innerHTML="";
+  graph.innerHTML="";
+  statusBox.innerText="Signals live (API based)";
+
+  const m=await fetch(API+"/market").then(r=>r.json());
+
+  document.body.className="";
+  if(m.volatility==="LOW")document.body.classList.add("lowVol");
+  if(m.volatility==="MEDIUM")document.body.classList.add("medVol");
+  if(m.volatility==="HIGH")document.body.classList.add("highVol");
+
+  marketBar.innerText = m.safe ? "Market SAFE ✅" : "Market RISKY ⚠️";
+
+  let candles=[];
+  if(pair.includes("USDT")){
+    candles=await fetch(API+"/crypto?symbol="+pair.replace("/",""))
+      .then(r=>r.json())
+      .then(d=>d.map(c=>({o:+c[1],c:+c[4],t:c[0]})));
+  }else{
+    candles=await fetch(API+"/candles?instrument="+pair+"&count=20")
+      .then(r=>r.json())
+      .then(j=>j.data.map(c=>({
+        o:c.open,c:c.close,
+        t:Date.parse(c.date+"T"+c.time+"Z")
+      })));
+  }
+
+  let up=0,down=0;
+  candles.forEach(c=>c.c>c.o?up++:down++);
+  const dir=up>down?"CALL":"PUT";
+  const conf=Math.min(92,80+Math.abs(up-down));
+
+  if(conf>=88 && m.safe) sound.play();
+
+  [2,5,10,15].forEach((g,i)=>{
+    const c=conf-i*2;if(c<80)return;
+    box.innerHTML+=`
+    <div class="signal ${dir.toLowerCase()}">
+      <b>${pair}</b><br>
+      ⏰ ${t6(candles.at(-1).t+g*60000)} UTC+6<br>
+      📈 ${dir} ${c}%
+      <div class="confBar">
+        <div class="confFill" style="width:${c}%"></div>
+      </div>
+    </div>`;
+  });
+
+  for(let i=0;i<5;i++){
+    const b=document.createElement("div");
+    b.style.height=(conf-70+i*2)+"%";
+    graph.appendChild(b);
+  }
+
+  const news=await fetch(API+"/news").then(r=>r.json());
+  newsBox.innerHTML="<b>Market News</b><br>"+
+    news.items.map(n=>`${n.time} • ${n.title}`).join("<br>");
+}
+
+load();
+setInterval(load,60000);
+</script>
+
+</body>
+</html>
