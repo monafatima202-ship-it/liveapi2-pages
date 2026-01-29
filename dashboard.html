@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>APX Premium Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at center,#0a2b22,#020807);
+  color:#64ffda;
+}
+.center{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:30px 15px;
+  text-align:center;
+}
+.ring{
+  width:170px;height:170px;
+  border-radius:50%;
+  border:5px solid rgba(100,255,218,.15);
+  border-top:5px solid #64ffda;
+  animation:spin 2s linear infinite;
+  display:flex;align-items:center;justify-content:center;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{margin:20px 0 5px;letter-spacing:2px}
+.sub{font-size:14px;opacity:.8;margin-bottom:15px}
+
+.badge{
+  padding:8px 18px;
+  border-radius:20px;
+  font-weight:bold;
+  margin:10px 0;
+}
+.open{background:#00ff99;color:#000}
+.closed{background:#ff4d4d;color:#000}
+
+.bar{
+  width:90%;height:8px;
+  background:rgba(255,255,255,.1);
+  border-radius:10px;
+  overflow:hidden;margin:10px 0;
+}
+.fill{
+  height:100%;width:100%;
+  background:linear-gradient(90deg,#64ffda,#00c9a7);
+}
+
+#status{
+  margin:10px 0;
+  padding:14px;
+  border-radius:18px;
+  background:rgba(0,255,200,.08);
+  width:90%;
+}
+
+.signal{
+  width:90%;
+  margin:14px 0;
+  padding:15px;
+  border-radius:18px;
+  background:#041d18;
+  box-shadow:0 0 18px rgba(0,255,200,.25);
+  text-align:left;
+}
+.signal.glow{
+  box-shadow:0 0 30px rgba(0,255,200,.6);
+}
+.signal.call{border-left:5px solid #00ff99}
+.signal.put{border-left:5px solid #ff5f5f}
+
+.confBar{
+  width:100%;height:6px;
+  background:#033;
+  border-radius:6px;margin-top:8px;
+}
+.confFill{
+  height:100%;
+  background:#64ffda;
+  border-radius:6px;
+}
+
+.news{
+  width:90%;
+  margin-top:20px;
+  padding:15px;
+  border-radius:18px;
+  background:#021411;
+  box-shadow:0 0 15px rgba(255,180,0,.4);
+  text-align:left;
+}
+.news h3{margin:0 0 6px}
+
+.btn{
+  margin:25px 0;
+  padding:16px 40px;
+  border:none;
+  border-radius:18px;
+  font-size:18px;
+  font-weight:bold;
+  background:#ffd000;
+  color:#000;
+}
+</style>
+</head>
+
+<body>
+<div class="center">
+
+  <div class="ring">📡</div>
+
+  <h1>APX PREMIUM ENGINE</h1>
+  <div class="sub">ESTABLISHING SECURE CONNECTION</div>
+
+  <div id="marketBadge" class="badge open">MARKET OPEN</div>
+
+  <div class="bar"><div class="fill"></div></div>
+  <div id="countdown">Next signal in: 60s</div>
+
+  <div id="status">Initializing...</div>
+
+  <div id="signals"></div>
+
+  <div id="newsBox" class="news">
+    <h3>High Impact News</h3>
+    <div id="newsText">Loading news...</div>
+  </div>
+
+  <button class="btn" onclick="location.href='assets.html'">
+    ENTER ASSETS
+  </button>
+
+</div>
+
+<script>
+const pair =
+  new URLSearchParams(location.search).get("pair") || "EUR_USD";
+
+const SIGNAL_API =
+  "https://liveproxy.mkapi009.workers.dev/candles";
+const NEWS_API =
+  "https://liveproxy.mkapi009.workers.dev/news";
+
+const box = document.getElementById("signals");
+const statusBox = document.getElementById("status");
+const newsText = document.getElementById("newsText");
+const countdownEl = document.getElementById("countdown");
+
+let counter = 60;
+setInterval(()=>{
+  counter--;
+  if(counter<=0) counter=60;
+  countdownEl.innerText = "Next signal in: "+counter+"s";
+},1000);
+
+function loadNews(){
+  fetch(NEWS_API+"?symbol="+pair)
+    .then(r=>r.json())
+    .then(n=>{
+      if(!n || !n.highImpact){
+        newsText.innerText="No high impact news";
+        return;
+      }
+      newsText.innerHTML = `
+        ⚠ ${n.title}<br>
+        ⏰ ${n.time} (UTC+6)
+      `;
+      statusBox.innerText =
+        "High impact news – signals paused";
+    })
+    .catch(()=>{
+      newsText.innerText="No high impact news";
+    });
+}
+
+function loadSignals(){
+  box.innerHTML="";
+  statusBox.innerText="Analyzing market...";
+
+  fetch(SIGNAL_API+"?instrument="+pair+"&count=20")
+    .then(r=>r.json())
+    .then(j=>{
+      const candles = j.data;
+      if(!candles || candles.length<10)
+        throw "no data";
+
+      let call=0, put=0, vol=0;
+      candles.forEach(c=>{
+        if(c.direction==="call") call++;
+        else put++;
+        vol+=c.volume;
+      });
+
+      const trend = call>put?"CALL":"PUT";
+      const baseConf =
+        Math.min(92,80+Math.abs(call-put));
+
+      const last = candles[candles.length-1];
+      const [hh,mm]=last.time.split(":").map(Number);
+
+      for(let i=1;i<=5;i++){
+        const m = mm+i;
+        const h = (hh+Math.floor(m/60))%24;
+        const min = m%60;
+        const time =
+          String(h).padStart(2,"0")+":"+
+          String(min).padStart(2,"0");
+
+        const conf = baseConf-(i-1)*2;
+        if(conf<80) continue;
+
+        box.innerHTML+=`
+        <div class="signal glow ${trend.toLowerCase()}">
+          <b>${pair}</b><br>
+          ⏰ ${time} (UTC+6)<br>
+          📈 ${trend} • Confidence ${conf}%<br>
+          📊 Avg Volume ${Math.round(vol/candles.length)}
+          <div class="confBar">
+            <div class="confFill" style="width:${conf}%"></div>
+          </div>
+        </div>`;
+      }
+
+      statusBox.innerText="Signals live (API based)";
+    })
+    .catch(()=>{
+      statusBox.innerText="Signal server unavailable";
+    });
+}
+
+loadSignals();
+loadNews();
+setInterval(loadSignals,60000);
+setInterval(loadNews,300000);
+</script>
+
+</body>
+</html>
